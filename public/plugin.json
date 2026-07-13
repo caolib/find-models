@@ -7,38 +7,26 @@
   },
   "features": [
     {
-      "code": "hello",
-      "explain": "这是插件应用的第一个功能",
+      "code": "home",
+      "explain": "搜索 AI 模型 / 按厂商浏览",
       "cmds": [
-        "你好",
-        "hello"
+        "md",
+        "models",
+        "模型查询",
+        "查模型",
+        "厂商",
+        "providers"
       ]
     },
     {
-      "code": "read",
-      "explain": "功能指令+匹配指令示例，使用 node.js 能力读文件",
-      "cmds": [
-        "读文件",
-        {
-          "type": "files",
-          "fileType": "file",
-          "maxLength": 1,
-          "label": "读文件"
-        }
-      ]
-    },
-    {
-      "code": "write",
-      "explain": "匹配指令示例，使用 node.js 能力写文件",
-      "mainHide": true,
+      "code": "input-search",
+      "explain": "直接搜索选中的模型名",
       "cmds": [
         {
           "type": "over",
-          "label": "保存为文件"
-        },
-        {
-          "type": "img",
-          "label": "保存为文件"
+          "label": "用 models.dev 查模型",
+          "minLength": 2,
+          "maxLength": 200
         }
       ]
     }

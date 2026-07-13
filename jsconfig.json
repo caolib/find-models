@@ -6,7 +6,7 @@
     ]
   },
   "include": [
-    "src/**/*.jsx",
+    "src/**/*.vue",
     "src/**/*.js"
   ]
 }

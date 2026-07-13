@@ -57,31 +57,46 @@ function readCatalogFile () {
   }
 }
 
+let refreshInflight = null
+
 window.services = {
   // 拉取并缓存 catalog.json，返回 { models, providers, ts }
-  async getCatalog (force = false) {
-    if (!force) {
-      const cached = readCatalogFile()
-      if (cached) return cached
+  // force: 强制网络刷新；maxAgeMs: 过期阈值
+  // 有缓存 → 立刻返回；已过期则后台静默刷新（不阻塞）
+  async getCatalog (force = false, maxAgeMs = null) {
+    if (force) return fetchAndWriteCatalog()
+
+    const cached = readCatalogFile()
+    if (cached) {
+      const age = catalogAgeFrom(cached)
+      const expired = maxAgeMs != null && age >= maxAgeMs
+      if (expired) scheduleBackgroundRefresh()
+      return cached
     }
-    fs.mkdirSync(DATA_DIR, { recursive: true })
-    const raw = await fetchText(CATALOG_URL)
-    const catalog = JSON.parse(raw)
-    const data = { models: catalog.models || {}, providers: catalog.providers || {}, ts: Date.now() }
-    fs.writeFileSync(CATALOG_FILE, JSON.stringify(data), 'utf8')
-    return data
+
+    // 无缓存才阻塞等待网络
+    return fetchAndWriteCatalog()
   },
 
   catalogAgeMs () {
-    try {
-      const st = fs.statSync(CATALOG_FILE)
-      return Date.now() - st.mtimeMs
-    } catch {
-      return Infinity
+    const cached = readCatalogFile()
+    if (!cached) return Infinity
+    return catalogAgeFrom(cached)
+  },
+
+  catalogInfo () {
+    const cached = readCatalogFile()
+    if (!cached) {
+      return { ts: null, ageMs: Infinity, hasCache: false }
+    }
+    const ageMs = catalogAgeFrom(cached)
+    return {
+      ts: cached.ts || (Date.now() - ageMs),
+      ageMs,
+      hasCache: true
     }
   },
 
-  // 取供应商 logo 本地路径，缺则下载落地
   async getProviderLogo (providerId) {
     try { fs.mkdirSync(LOGO_DIR, { recursive: true }) } catch {}
     const file = path.join(LOGO_DIR, `${providerId}.svg`)
@@ -95,11 +110,39 @@ window.services = {
     }
   },
 
-  // 取本地已缓存的 logo 路径（不下载）
   providerLogoPath (providerId) {
     const file = path.join(LOGO_DIR, `${providerId}.svg`)
     return fs.existsSync(file) ? file : null
   },
 
   copyText (text) { window.utools.copyText(text) }
+}
+
+function catalogAgeFrom (cached) {
+  if (cached && typeof cached.ts === 'number') return Math.max(0, Date.now() - cached.ts)
+  try {
+    const st = fs.statSync(CATALOG_FILE)
+    return Math.max(0, Date.now() - st.mtimeMs)
+  } catch {
+    return Infinity
+  }
+}
+
+async function fetchAndWriteCatalog () {
+  if (refreshInflight) return refreshInflight
+  refreshInflight = (async () => {
+    fs.mkdirSync(DATA_DIR, { recursive: true })
+    const raw = await fetchText(CATALOG_URL)
+    const catalog = JSON.parse(raw)
+    const data = { models: catalog.models || {}, providers: catalog.providers || {}, ts: Date.now() }
+    fs.writeFileSync(CATALOG_FILE, JSON.stringify(data), 'utf8')
+    return data
+  })().finally(() => { refreshInflight = null })
+  return refreshInflight
+}
+
+// ponytail: 后台刷新失败静默，下次再试
+function scheduleBackgroundRefresh () {
+  if (refreshInflight) return
+  fetchAndWriteCatalog().catch(() => {})
 }

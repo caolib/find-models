@@ -31,7 +31,7 @@ onUnmounted(() => { alive = false })
 
 onMounted(async () => {
   try {
-    const catalog = await window.services.getCatalog()
+    const catalog = await window.services.getCatalog(false, prefs.catalogTtlMs)
     if (!alive) return
     rows.value = flatten(catalog)
     loading.value = false

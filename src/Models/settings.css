@@ -2,12 +2,15 @@
   height: 100%;
   overflow: auto;
   padding: 16px;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 12px;
+  align-content: start;
 }
 .settings-card {
-  max-width: 480px;
+  max-width: none;
+  width: 100%;
+  min-width: 0;
   padding: 16px;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -131,4 +134,35 @@
   border-color: var(--accent-border);
   background: var(--accent-soft);
   text-decoration: none;
+}
+.settings-link-btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+.settings-kv {
+  margin-top: 14px;
+  border-top: 1px solid var(--border-soft);
+  padding-top: 10px;
+}
+.settings-kv-row {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 8px;
+  align-items: baseline;
+  padding: 4px 0;
+  font-size: 12px;
+}
+.settings-kv-row .k { color: var(--text-muted); }
+.settings-kv-row .v { color: var(--text-soft); word-break: break-all; }
+.settings-kv-row .v.mono { font-variant-numeric: tabular-nums; }
+.settings-actions {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.settings-err {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  color: var(--danger);
 }

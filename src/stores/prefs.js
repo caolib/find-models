@@ -74,8 +74,17 @@ export const usePrefsStore = defineStore('prefs', {
     tab: 'search',
     pinnedProviders: [],
     fontFamily: DEFAULT_FONT,
-    theme: 'system'
+    theme: 'system',
+    // catalog 缓存有效期（分钟），默认 180
+    catalogTtlMinutes: 180
   }),
+  getters: {
+    catalogTtlMs (state) {
+      const m = Number(state.catalogTtlMinutes)
+      if (!Number.isFinite(m) || m < 0) return 180 * 60 * 1000
+      return m * 60 * 1000
+    }
+  },
   actions: {
     setTab (tab) {
       if (TABS.has(tab)) this.tab = tab
@@ -88,6 +97,12 @@ export const usePrefsStore = defineStore('prefs', {
       if (!THEMES.has(mode)) return
       this.theme = mode
       applyTheme(mode)
+    },
+    setCatalogTtlMinutes (v) {
+      const n = Math.round(Number(v))
+      if (!Number.isFinite(n) || n < 0) return
+      // 0 = 每次都重新拉；上限 7 天
+      this.catalogTtlMinutes = Math.min(n, 60 * 24 * 7)
     },
     togglePin (id) {
       if (!id) return
@@ -102,6 +117,6 @@ export const usePrefsStore = defineStore('prefs', {
   persist: {
     key: 'modelsdev.prefs',
     storage: appStorage,
-    pick: ['tab', 'pinnedProviders', 'fontFamily', 'theme']
+    pick: ['tab', 'pinnedProviders', 'fontFamily', 'theme', 'catalogTtlMinutes']
   }
 })

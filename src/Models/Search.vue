@@ -8,6 +8,7 @@ import {
 import Icon from './Icon.vue'
 import Logo from './Logo.vue'
 import { useUiStore } from '../stores/ui'
+import { usePrefsStore } from '../stores/prefs'
 import './index.css'
 
 const props = defineProps({
@@ -17,6 +18,7 @@ const props = defineProps({
 const emit = defineEmits(['select', 'stats'])
 
 const ui = useUiStore()
+const prefs = usePrefsStore()
 const { searchQuery: query, searchFilter: filter, searchSort: sort } = storeToRefs(ui)
 
 const VISION_MODALITIES = ['image', 'video', 'audio', 'pdf']
@@ -50,7 +52,7 @@ watch(
 
 onMounted(async () => {
   try {
-    const catalog = await window.services.getCatalog()
+    const catalog = await window.services.getCatalog(false, prefs.catalogTtlMs)
     if (!alive) return
     rows.value = flatten(catalog)
     loading.value = false

@@ -8,14 +8,10 @@
   "features": [
     {
       "code": "home",
-      "explain": "搜索 AI 模型 / 按厂商浏览",
+      "explain": "搜索 AI 模型 / 按供应商浏览",
       "cmds": [
-        "md",
         "models",
-        "模型查询",
-        "查模型",
-        "厂商",
-        "providers"
+        "模型"
       ]
     },
     {

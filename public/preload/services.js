@@ -81,7 +81,7 @@ window.services = {
     }
   },
 
-  // 取厂商 logo 本地路径，缺则下载落地
+  // 取供应商 logo 本地路径，缺则下载落地
   async getProviderLogo (providerId) {
     try { fs.mkdirSync(LOGO_DIR, { recursive: true }) } catch {}
     const file = path.join(LOGO_DIR, `${providerId}.svg`)
@@ -101,30 +101,5 @@ window.services = {
     return fs.existsSync(file) ? file : null
   },
 
-  copyText (text) { window.utools.copyText(text) },
-
-  // ponytail: 厂商置顶 id 列表，uTools dbStorage 持久化；浏览器 dev 回落 localStorage
-  getPinnedProviders () {
-    try {
-      if (window.utools?.dbStorage) {
-        const v = window.utools.dbStorage.getItem('pinnedProviders')
-        return Array.isArray(v) ? v : []
-      }
-      const raw = localStorage.getItem('modelsdev.pinnedProviders')
-      return raw ? JSON.parse(raw) : []
-    } catch {
-      return []
-    }
-  },
-
-  setPinnedProviders (ids) {
-    const list = Array.isArray(ids) ? ids.filter(Boolean) : []
-    try {
-      if (window.utools?.dbStorage) {
-        window.utools.dbStorage.setItem('pinnedProviders', list)
-        return
-      }
-      localStorage.setItem('modelsdev.pinnedProviders', JSON.stringify(list))
-    } catch {}
-  }
+  copyText (text) { window.utools.copyText(text) }
 }

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 
-// ponytail: 列表/厂商共用，暗色下缺图用首字母
+// ponytail: 列表/供应商共用，暗色下缺图用首字母
 const props = defineProps({
   id: { type: String, required: true },
   name: { type: String, default: '' },

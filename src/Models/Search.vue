@@ -1,18 +1,23 @@
 <script setup>
-import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { storeToRefs } from 'pinia'
 import {
-  flatten, featuresList, inputCost, outputCost, contextLimit,
+  flatten, inputCost, outputCost, contextLimit,
   formatTokens, formatCost
 } from './data'
 import Icon from './Icon.vue'
 import Logo from './Logo.vue'
+import { useUiStore } from '../stores/ui'
 import './index.css'
 
 const props = defineProps({
   enterAction: { type: Object, default: () => ({}) },
   selected: { type: Object, default: null }
 })
-const emit = defineEmits(['select'])
+const emit = defineEmits(['select', 'stats'])
+
+const ui = useUiStore()
+const { searchQuery: query, searchFilter: filter, searchSort: sort } = storeToRefs(ui)
 
 const VISION_MODALITIES = ['image', 'video', 'audio', 'pdf']
 
@@ -27,11 +32,10 @@ function rowKey (r) {
 const rows = ref([])
 const loading = ref(true)
 const error = ref('')
-const query = ref('')
-const filter = ref({})
-const sort = ref('updated')
 const PAGE = 50
-const page = ref(1)
+const limit = ref(PAGE)
+const listEl = ref(null)
+const showTop = ref(false)
 
 let alive = true
 onUnmounted(() => { alive = false })
@@ -39,7 +43,7 @@ onUnmounted(() => { alive = false })
 watch(
   () => props.enterAction,
   (a) => {
-    if (a?.type === 'over' && a?.payload) query.value = String(a.payload).trim()
+    if (a?.type === 'over' && a?.payload) ui.setSearchQuery(String(a.payload).trim())
   },
   { immediate: true }
 )
@@ -93,16 +97,53 @@ const filtered = computed(() => {
   return sorted
 })
 
-watch([query, filter, sort], () => { page.value = 1 })
+watch([query, filter, sort], () => {
+  limit.value = PAGE
+  showTop.value = false
+  nextTick(() => {
+    if (listEl.value) listEl.value.scrollTop = 0
+  })
+})
 
 const total = computed(() => filtered.value.length)
-const totalPages = computed(() => Math.max(1, Math.ceil(total.value / PAGE)))
-const pageItems = computed(() => filtered.value.slice((page.value - 1) * PAGE, page.value * PAGE))
-const from = computed(() => total.value === 0 ? 0 : (page.value - 1) * PAGE + 1)
-const to = computed(() => Math.min(page.value * PAGE, total.value))
+const pageItems = computed(() => filtered.value.slice(0, limit.value))
+const shown = computed(() => pageItems.value.length)
+const hasMore = computed(() => shown.value < total.value)
 
-function toggle (k) {
-  filter.value = { ...filter.value, [k]: !filter.value[k] }
+watch(
+  [shown, total, () => rows.value.length, loading, error],
+  () => {
+    emit('stats', {
+      shown: shown.value,
+      total: total.value,
+      all: rows.value.length,
+      loading: loading.value,
+      error: error.value
+    })
+  },
+  { immediate: true }
+)
+
+function loadMore () {
+  if (!hasMore.value) return
+  limit.value += PAGE
+  nextTick(() => {
+    const el = listEl.value
+    if (!el || !hasMore.value) return
+    if (el.scrollHeight <= el.clientHeight + 160) loadMore()
+  })
+}
+
+function onListScroll () {
+  const el = listEl.value
+  if (!el) return
+  showTop.value = el.scrollTop > 240
+  if (!hasMore.value) return
+  if (el.scrollTop + el.clientHeight >= el.scrollHeight - 160) loadMore()
+}
+
+function scrollToTop () {
+  listEl.value?.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 function retry () {
@@ -129,113 +170,47 @@ function onRowKey (e, r) {
     <button type="button" @click="retry">重试</button>
   </div>
   <div v-else class="search-view">
-    <div class="topbar">
-      <input
-        class="search-input"
-        autofocus
-        v-model="query"
-        placeholder="搜索 模型 / 厂商 / family   例: gpt-5, claude, glm"
-        aria-label="搜索模型"
-      >
-      <select
-        class="sort-select"
-        v-model="sort"
-        title="排序方式"
-        aria-label="排序方式"
-      >
-        <option value="updated">按更新时间</option>
-        <option value="cost">按输入价格</option>
-        <option value="context">按上下文</option>
-        <option value="name">按名称</option>
-      </select>
-    </div>
-
-    <div class="filterbar">
-      <button
-        v-for="f in featuresList()"
-        :key="f.key"
-        type="button"
-        :class="['filterchip', { on: filter[f.key] }]"
-        :aria-pressed="!!filter[f.key]"
-        @click="toggle(f.key)"
-      >
-        <span class="dot" />{{ f.label }}
-      </button>
-      <button
-        type="button"
-        :class="['filterchip', { on: filter.vision }]"
-        :aria-pressed="!!filter.vision"
-        @click="toggle('vision')"
-      >
-        <span class="dot" />多模态
-      </button>
-      <div class="pager-inline">
-        <button
-          type="button"
-          class="pg-btn"
-          :disabled="page <= 1"
-          title="上一页"
-          aria-label="上一页"
-          @click="page--"
-        >‹</button>
-        <span class="meta">
-          <template v-if="total === 0">无结果</template>
-          <template v-else>
-            {{ from }}–{{ to }} / <b>{{ total }}</b>{{ total !== rows.length ? ` · 总 ${rows.length}` : '' }}
-          </template>
-        </span>
-        <button
-          type="button"
-          class="pg-btn"
-          :disabled="page >= totalPages"
-          title="下一页"
-          aria-label="下一页"
-          @click="page++"
-        >›</button>
-      </div>
-    </div>
-
-    <div class="list-head" aria-hidden="true">
-      <span class="lh-logo" />
-      <span class="lh-main">模型</span>
-      <span class="lh-ctx">上下文</span>
-      <span class="lh-price">入 / 出 · /M</span>
-      <span class="lh-feats">能力</span>
-    </div>
-
-    <div class="scroll-list" role="listbox" aria-label="模型列表">
+    <div
+      ref="listEl"
+      class="scroll-list cards"
+      role="listbox"
+      aria-label="模型列表"
+      @scroll.passive="onListScroll"
+    >
       <div
         v-for="r in pageItems"
         :key="rowKey(r)"
         role="option"
         :aria-selected="!!(selected && rowKey(selected) === rowKey(r))"
         tabindex="0"
-        :class="['row-item', { on: selected && rowKey(selected) === rowKey(r) }]"
+        :class="['model-card', { on: selected && rowKey(selected) === rowKey(r) }]"
         @click="emit('select', r)"
         @keydown="onRowKey($event, r)"
       >
-        <Logo :id="r.providerId" :name="r.providerName" :size="26" />
-        <div class="col-main">
-          <div class="row-name">
-            <span class="name-text" :title="r.name">{{ r.name }}</span>
-            <span v-if="r.status" :class="['tag-status', r.status]">{{ r.status }}</span>
-          </div>
-          <div class="row-sub">
-            <span class="provider">{{ r.providerName }}</span>
-            <span class="sep">·</span>
-            <span class="id" :title="r.id">{{ r.id }}</span>
+        <div class="model-card-head">
+          <Logo :id="r.providerId" :name="r.providerName" :size="26" />
+          <div class="model-card-top">
+            <div class="row-name">
+              <span class="name-text" :title="r.name">{{ r.name }}</span>
+              <span v-if="r.status" :class="['tag-status', r.status]">{{ r.status }}</span>
+            </div>
+            <div class="row-sub">
+              <span class="provider">{{ r.providerName }}</span>
+              <span class="sep">·</span>
+              <span class="id" :title="r.id">{{ r.id }}</span>
+            </div>
           </div>
         </div>
-        <div class="col-ctx" title="上下文窗口">
-          {{ formatTokens(contextLimit(r)) }}
-        </div>
-        <div class="col-price" title="输入 / 输出 · 每百万 token USD">
-          <span v-if="inputCost(r) != null || outputCost(r) != null" class="price-pair">
-            <span class="price-in">{{ formatCost(inputCost(r)) }}</span>
-            <span class="price-sep">/</span>
-            <span class="price-out">{{ formatCost(outputCost(r)) }}</span>
+        <div class="model-card-meta">
+          <span class="ctx" title="上下文窗口">{{ formatTokens(contextLimit(r)) }}</span>
+          <span class="col-price" title="输入 / 输出 · 每百万 token USD">
+            <span v-if="inputCost(r) != null || outputCost(r) != null" class="price-pair">
+              <span class="price-in">{{ formatCost(inputCost(r)) }}</span>
+              <span class="price-sep">/</span>
+              <span class="price-out">{{ formatCost(outputCost(r)) }}</span>
+            </span>
+            <span v-else class="price-none">—</span>
           </span>
-          <span v-else class="price-none">—</span>
         </div>
         <div class="col-feats">
           <span v-if="r.reasoning" class="badge reason">推理</span>
@@ -245,6 +220,28 @@ function onRowKey (e, r) {
         </div>
       </div>
       <div v-if="pageItems.length === 0" class="list-empty">未匹配到模型，换个关键词试试</div>
+      <div class="scroll-sentinel">
+        <button
+          v-if="hasMore"
+          type="button"
+          class="scroll-more-btn"
+          @click="loadMore"
+        >
+          加载更多（{{ shown }} / {{ total }}）
+        </button>
+        <span v-else-if="total > 0" class="scroll-end">已全部显示</span>
+      </div>
     </div>
+
+    <button
+      v-show="showTop"
+      type="button"
+      class="back-top"
+      title="回到顶部"
+      aria-label="回到顶部"
+      @click="scrollToTop"
+    >
+      <Icon name="up" :size="16" />
+    </button>
   </div>
 </template>

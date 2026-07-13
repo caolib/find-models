@@ -288,7 +288,7 @@ const hasToggle = computed(() => props.row.reasoning_options?.some((o) => o.type
       </div>
 
       <div class="sd-section">
-        <div class="ss-title">厂商 · {{ row.providerName }}</div>
+        <div class="ss-title">供应商 · {{ row.providerName }}</div>
         <div class="kv-mini">
           <span class="k">Provider</span>
           <span class="v mono">{{ row.providerId }}</span>
@@ -311,7 +311,7 @@ const hasToggle = computed(() => props.row.reasoning_options?.some((o) => o.type
           @click="openUrl(row.providerDoc)"
         >
           <Icon name="doc" :size="12" />
-          厂商文档 ↗
+          供应商文档 ↗
         </span>
       </div>
 

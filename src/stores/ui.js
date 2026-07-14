@@ -6,23 +6,23 @@ export const useUiStore = defineStore('ui', {
     searchQuery: '',
     searchFilter: {},
     searchSort: 'updated',
-    providerModelQ: ''
+    providerModelQ: '',
   }),
   actions: {
-    setSearchQuery (q) {
+    setSearchQuery(q) {
       this.searchQuery = String(q ?? '')
     },
-    toggleFilter (k) {
+    toggleFilter(k) {
       this.searchFilter = { ...this.searchFilter, [k]: !this.searchFilter[k] }
     },
-    setSort (v) {
+    setSort(v) {
       this.searchSort = v
     },
-    setProviderModelQ (q) {
+    setProviderModelQ(q) {
       this.providerModelQ = String(q ?? '')
     },
-    clearProviderModelQ () {
+    clearProviderModelQ() {
       this.providerModelQ = ''
-    }
-  }
+    },
+  },
 })

@@ -5,13 +5,13 @@ import {
   outputCost,
   contextLimit,
   formatCost,
-  perKCost
+  perKCost,
 } from './data'
 import Icon from './Icon.vue'
 import './detail.css'
 
 const props = defineProps({
-  row: { type: Object, required: true }
+  row: { type: Object, required: true },
 })
 const emit = defineEmits(['close'])
 
@@ -20,7 +20,7 @@ const VISION = ['image', 'video', 'audio', 'pdf']
 // ponytail: 原文 token 展示，含 xhigh；未知档位按 API 原样附后
 const EFFORT_ORDER = ['none', 'low', 'medium', 'high', 'xhigh', 'max']
 
-function modTagClass (m) {
+function modTagClass(m) {
   return ['text'].includes(m) ? 'text' : m
 }
 
@@ -30,23 +30,31 @@ const ctx = computed(() => contextLimit(props.row))
 const inMax = computed(() => props.row.limit?.input)
 const outMax = computed(() => props.row.limit?.output)
 
-function openUrl (u) {
+function openUrl(u) {
   window.utools?.shellOpenExternal?.(u) || window.open(u, '_blank')
 }
 
-watch(() => props.row.id, () => { copied.value = false })
+watch(
+  () => props.row.id,
+  () => {
+    copied.value = false
+  },
+)
 
 let copyTimer
-function copyId () {
+function copyId() {
   window.services?.copyText?.(props.row.id)
   copied.value = true
   clearTimeout(copyTimer)
-  copyTimer = setTimeout(() => { copied.value = false }, 1200)
+  copyTimer = setTimeout(() => {
+    copied.value = false
+  }, 1200)
 }
 
-function fmt (n) {
+function fmt(n) {
   if (n == null) return ['—', '']
-  if (n >= 1_000_000) return [(n / 1_000_000).toFixed(n % 1_000_000 ? 1 : 0), 'M']
+  if (n >= 1_000_000)
+    return [(n / 1_000_000).toFixed(n % 1_000_000 ? 1 : 0), 'M']
   if (n >= 1000) return [Math.round(n / 1000), 'K']
   return [String(n), '']
 }
@@ -57,9 +65,10 @@ const outParts = computed(() => fmt(outMax.value))
 
 const inMods = computed(() => props.row.modalities?.input || [])
 const outMods = computed(() => props.row.modalities?.output || [])
-const multimodal = computed(() =>
-  inMods.value.filter((m) => VISION.includes(m)).length > 0 ||
-  outMods.value.filter((m) => m !== 'text').length > 0
+const multimodal = computed(
+  () =>
+    inMods.value.filter((m) => VISION.includes(m)).length > 0 ||
+    outMods.value.filter((m) => m !== 'text').length > 0,
 )
 
 const reasonTags = computed(() => {
@@ -73,8 +82,12 @@ const reasonTags = computed(() => {
   return [...ordered, ...others]
 })
 
-const hasBudget = computed(() => props.row.reasoning_options?.some((o) => o.type === 'budget_tokens'))
-const hasToggle = computed(() => props.row.reasoning_options?.some((o) => o.type === 'toggle'))
+const hasBudget = computed(() =>
+  props.row.reasoning_options?.some((o) => o.type === 'budget_tokens'),
+)
+const hasToggle = computed(() =>
+  props.row.reasoning_options?.some((o) => o.type === 'toggle'),
+)
 </script>
 
 <template>
@@ -82,9 +95,13 @@ const hasToggle = computed(() => props.row.reasoning_options?.some((o) => o.type
     <div class="sd-head">
       <h1>
         {{ row.name }}
-        <span v-if="row.status" :class="['tag-status', row.status]">{{ row.status }}</span>
+        <span v-if="row.status" :class="['tag-status', row.status]">{{
+          row.status
+        }}</span>
       </h1>
-      <button class="sd-close" title="关闭预览" @click="emit('close')">×</button>
+      <button class="sd-close" title="关闭预览" @click="emit('close')">
+        ×
+      </button>
     </div>
 
     <div class="sd-body">
@@ -147,14 +164,21 @@ const hasToggle = computed(() => props.row.reasoning_options?.some((o) => o.type
         </div>
         <div v-if="reasonTags.length" class="effort-row">
           <span class="er-label">思考水平</span>
-          <span v-for="v in reasonTags" :key="v" class="effort-tag">{{ v }}</span>
+          <span v-for="v in reasonTags" :key="v" class="effort-tag">{{
+            v
+          }}</span>
         </div>
-        <div v-if="hasBudget || hasToggle || row.interleaved" class="effort-meta">
+        <div
+          v-if="hasBudget || hasToggle || row.interleaved"
+          class="effort-meta"
+        >
           <span v-if="hasBudget">· 支持 budget_tokens 控制思考预算</span>
           <span v-if="hasToggle">· 支持 toggle 开关</span>
           <span v-if="row.interleaved">
             · 交错推理 (
-            {{ typeof row.interleaved === 'object' ? row.interleaved.field : 'on' }}
+            {{
+              typeof row.interleaved === 'object' ? row.interleaved.field : 'on'
+            }}
             )
           </span>
         </div>
@@ -174,7 +198,8 @@ const hasToggle = computed(() => props.row.reasoning_options?.some((o) => o.type
               v-for="m in inMods"
               :key="m"
               :class="['mod-tag', modTagClass(m)]"
-            >{{ m }}</span>
+              >{{ m }}</span
+            >
           </div>
         </div>
         <div class="mod-block">
@@ -186,7 +211,8 @@ const hasToggle = computed(() => props.row.reasoning_options?.some((o) => o.type
               v-for="m in outMods"
               :key="m"
               :class="['mod-tag', modTagClass(m)]"
-            >{{ m }}</span>
+              >{{ m }}</span
+            >
           </div>
         </div>
         <div class="mod-block">
@@ -332,7 +358,9 @@ const hasToggle = computed(() => props.row.reasoning_options?.some((o) => o.type
               <td class="sc">{{ b.score }}</td>
               <td>{{ b.metric }}</td>
               <td>
-                <span v-if="b.source" class="src" @click="openUrl(b.source)">↗</span>
+                <span v-if="b.source" class="src" @click="openUrl(b.source)"
+                  >↗</span
+                >
                 <template v-else>—</template>
               </td>
             </tr>

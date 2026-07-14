@@ -330,7 +330,6 @@ Models.dev is created by the maintainers of [SST](https://sst.dev).
 
 **Join our community** [Discord](https://sst.dev/discord) | [YouTube](https://www.youtube.com/c/sst-dev) | [X.com](https://x.com/SST_dev)
 
-
 How to use
 
 Models.dev is a comprehensive open-source database of AI model specifications, pricing, and features.

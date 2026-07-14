@@ -12,7 +12,7 @@ import {
   applyTheme,
   bindSystemTheme,
   unbindSystemTheme,
-  normalizeFont
+  normalizeFont,
 } from './stores/prefs'
 import { useUiStore } from './stores/ui'
 import './Models/app.css'
@@ -40,25 +40,26 @@ const tabView = computed(() => {
 prefs.$patch({ fontFamily: normalizeFont(prefs.fontFamily) })
 if (!['system', 'light', 'dark'].includes(prefs.theme)) prefs.theme = 'system'
 
-function focusTabSearch () {
+function focusTabSearch() {
   nextTick(() => {
-    const el = tab.value === 'search'
-      ? searchInputEl.value
-      : tab.value === 'providers'
-        ? providerInputEl.value
-        : null
+    const el =
+      tab.value === 'search'
+        ? searchInputEl.value
+        : tab.value === 'providers'
+          ? providerInputEl.value
+          : null
     el?.focus()
   })
 }
 
-function onPanelStats (e) {
+function onPanelStats(e) {
   if (tab.value === 'providers') providerStats.value = e
   else searchStats.value = e
 }
 
 // ponytail: 输入防抖 200ms，避免逐字重算 filtered；enterAction/清除走即时路径
 let debounceTimer
-function debounce (fn, ms = 200) {
+function debounce(fn, ms = 200) {
   return (...args) => {
     clearTimeout(debounceTimer)
     debounceTimer = setTimeout(() => fn(...args), ms)
@@ -89,10 +90,10 @@ onMounted(() => {
   })
 })
 
-function select (row) {
+function select(row) {
   selected.value = row
 }
-function close () {
+function close() {
   selected.value = null
 }
 </script>
@@ -136,7 +137,7 @@ function close () {
                 placeholder="搜索 模型 / 供应商 / family"
                 aria-label="搜索模型"
                 @input="debouncedSetSearchQuery($event.target.value)"
-              >
+              />
               <button
                 v-if="searchQuery"
                 type="button"
@@ -168,7 +169,10 @@ function close () {
             </span>
           </div>
 
-          <div v-else-if="tab === 'providers'" class="app-toolbar app-toolbar-prov">
+          <div
+            v-else-if="tab === 'providers'"
+            class="app-toolbar app-toolbar-prov"
+          >
             <div class="search-field app-search-field">
               <input
                 ref="providerInputEl"
@@ -178,7 +182,7 @@ function close () {
                 placeholder="搜索当前供应商模型…"
                 aria-label="搜索当前供应商模型"
                 @input="debouncedSetProviderModelQ($event.target.value)"
-              >
+              />
               <button
                 v-if="providerModelQ"
                 type="button"

@@ -1,6 +1,6 @@
 // ponytail: uTools 用 dbStorage，浏览器 dev 回落 localStorage
 export const appStorage = {
-  getItem (key) {
+  getItem(key) {
     try {
       if (window.utools?.dbStorage) {
         const v = window.utools.dbStorage.getItem(key)
@@ -12,7 +12,7 @@ export const appStorage = {
       return null
     }
   },
-  setItem (key, value) {
+  setItem(key, value) {
     try {
       if (window.utools?.dbStorage) {
         window.utools.dbStorage.setItem(key, value)
@@ -20,11 +20,11 @@ export const appStorage = {
       }
       localStorage.setItem(key, value)
     } catch {}
-  }
+  },
 }
 
 // 一次性迁移旧 pinnedProviders
-function migrateLegacy (key) {
+function migrateLegacy(key) {
   if (key !== 'modelsdev.prefs') return null
   try {
     let pinned = []

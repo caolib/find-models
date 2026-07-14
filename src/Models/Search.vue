@@ -2,8 +2,11 @@
 import { computed, ref, watch, onMounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import {
-  inputCost, outputCost, contextLimit,
-  formatTokens, formatCost
+  inputCost,
+  outputCost,
+  contextLimit,
+  formatTokens,
+  formatCost,
 } from './data'
 import Icon from './Icon.vue'
 import Logo from './Logo.vue'
@@ -14,14 +17,18 @@ import './index.css'
 
 const props = defineProps({
   enterAction: { type: Object, default: () => ({}) },
-  selected: { type: Object, default: null }
+  selected: { type: Object, default: null },
 })
 const emit = defineEmits(['select', 'stats'])
 
 const ui = useUiStore()
 const prefs = usePrefsStore()
 const catalog = useCatalogStore()
-const { searchQuery: query, searchFilter: filter, searchSort: sort } = storeToRefs(ui)
+const {
+  searchQuery: query,
+  searchFilter: filter,
+  searchSort: sort,
+} = storeToRefs(ui)
 const { pinnedProviders: pinned } = storeToRefs(prefs)
 const { rows, loading, error, loaded } = storeToRefs(catalog)
 
@@ -43,28 +50,36 @@ const showTop = ref(false)
 watch(
   () => props.enterAction,
   (a) => {
-    if (a?.type === 'over' && a?.payload) ui.setSearchQuery(String(a.payload).trim())
+    if (a?.type === 'over' && a?.payload)
+      ui.setSearchQuery(String(a.payload).trim())
   },
-  { immediate: true }
+  { immediate: true },
 )
 
-onMounted(() => { catalog.ensureLoaded() })
+onMounted(() => {
+  catalog.ensureLoaded()
+})
 
 const filtered = computed(() => {
   const q = query.value.trim().toLowerCase()
   let list = rows.value
   if (q) {
-    list = list.filter((r) =>
-      r.id.toLowerCase().includes(q) ||
-      r.name.toLowerCase().includes(q) ||
-      r.family.toLowerCase().includes(q) ||
-      r.providerName.toLowerCase().includes(q) ||
-      r.providerId.toLowerCase().includes(q)
+    list = list.filter(
+      (r) =>
+        r.id.toLowerCase().includes(q) ||
+        r.name.toLowerCase().includes(q) ||
+        r.family.toLowerCase().includes(q) ||
+        r.providerName.toLowerCase().includes(q) ||
+        r.providerId.toLowerCase().includes(q),
     )
   }
-  const activeFt = Object.entries(filter.value).filter(([, v]) => v).map(([k]) => k)
+  const activeFt = Object.entries(filter.value)
+    .filter(([, v]) => v)
+    .map(([k]) => k)
   if (activeFt.length) {
-    list = list.filter((r) => activeFt.every((k) => (k === 'vision' ? hasVision(r) : r[k])))
+    list = list.filter((r) =>
+      activeFt.every((k) => (k === 'vision' ? hasVision(r) : r[k])),
+    )
   }
 
   const sorted = [...list]
@@ -80,14 +95,17 @@ const filtered = computed(() => {
       break
     case 'updated':
     default:
-      sorted.sort((a, b) => (b.last_updated || '').localeCompare(a.last_updated || ''))
+      sorted.sort((a, b) =>
+        (b.last_updated || '').localeCompare(a.last_updated || ''),
+      )
       break
   }
   // ponytail: 搜索时置顶供应商卡片置顶，组内保持原排序（稳定分区）
   if (q) {
-    sorted.sort((a, b) =>
-      (pinned.value.includes(b.providerId) ? 1 : 0) -
-      (pinned.value.includes(a.providerId) ? 1 : 0)
+    sorted.sort(
+      (a, b) =>
+        (pinned.value.includes(b.providerId) ? 1 : 0) -
+        (pinned.value.includes(a.providerId) ? 1 : 0),
     )
   }
   return sorted
@@ -114,10 +132,10 @@ watch(
       total: total.value,
       all: rows.value.length,
       loading: loading.value,
-      error: error.value
+      error: error.value,
     })
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 function loadMore() {
@@ -166,17 +184,37 @@ function onRowKey(e, r) {
     <button type="button" @click="retry">重试</button>
   </div>
   <div v-else class="search-view">
-    <div ref="listEl" class="scroll-list cards" role="listbox" aria-label="模型列表" @scroll.passive="onListScroll">
-      <div v-for="r in pageItems" :key="rowKey(r)" role="option"
-        :aria-selected="!!(selected && rowKey(selected) === rowKey(r))" tabindex="0"
-        :class="['model-card', { on: selected && rowKey(selected) === rowKey(r), pinned: query.trim() && pinned.includes(r.providerId) }]"
-        @click="emit('select', r)" @keydown="onRowKey($event, r)">
+    <div
+      ref="listEl"
+      class="scroll-list cards"
+      role="listbox"
+      aria-label="模型列表"
+      @scroll.passive="onListScroll"
+    >
+      <div
+        v-for="r in pageItems"
+        :key="rowKey(r)"
+        role="option"
+        :aria-selected="!!(selected && rowKey(selected) === rowKey(r))"
+        tabindex="0"
+        :class="[
+          'model-card',
+          {
+            on: selected && rowKey(selected) === rowKey(r),
+            pinned: query.trim() && pinned.includes(r.providerId),
+          },
+        ]"
+        @click="emit('select', r)"
+        @keydown="onRowKey($event, r)"
+      >
         <div class="model-card-head">
           <Logo :id="r.providerId" :name="r.providerName" :size="26" />
           <div class="model-card-top">
             <div class="row-name">
               <span class="name-text" :title="r.name">{{ r.name }}</span>
-              <span v-if="r.status" :class="['tag-status', r.status]">{{ r.status }}</span>
+              <span v-if="r.status" :class="['tag-status', r.status]">{{
+                r.status
+              }}</span>
             </div>
             <div class="row-sub">
               <span class="provider">{{ r.providerName }}</span>
@@ -186,9 +224,14 @@ function onRowKey(e, r) {
           </div>
         </div>
         <div class="model-card-meta">
-          <span class="ctx" title="上下文窗口">{{ formatTokens(contextLimit(r)) }}</span>
+          <span class="ctx" title="上下文窗口">{{
+            formatTokens(contextLimit(r))
+          }}</span>
           <span class="col-price" title="输入 / 输出 · 每百万 token USD">
-            <span v-if="inputCost(r) != null || outputCost(r) != null" class="price-pair">
+            <span
+              v-if="inputCost(r) != null || outputCost(r) != null"
+              class="price-pair"
+            >
               <span class="price-in">{{ formatCost(inputCost(r)) }}</span>
               <span class="price-sep">/</span>
               <span class="price-out">{{ formatCost(outputCost(r)) }}</span>
@@ -203,16 +246,30 @@ function onRowKey(e, r) {
           <span v-if="r.open_weights" class="badge open">开源</span>
         </div>
       </div>
-      <div v-if="pageItems.length === 0" class="list-empty">未匹配到模型，换个关键词试试</div>
+      <div v-if="pageItems.length === 0" class="list-empty">
+        未匹配到模型，换个关键词试试
+      </div>
       <div class="scroll-sentinel">
-        <button v-if="hasMore" type="button" class="scroll-more-btn" @click="loadMore">
+        <button
+          v-if="hasMore"
+          type="button"
+          class="scroll-more-btn"
+          @click="loadMore"
+        >
           加载更多（{{ shown }} / {{ total }}）
         </button>
         <span v-else-if="total > 0" class="scroll-end">已全部显示</span>
       </div>
     </div>
 
-    <button v-show="showTop" type="button" class="back-top" title="回到顶部" aria-label="回到顶部" @click="scrollToTop">
+    <button
+      v-show="showTop"
+      type="button"
+      class="back-top"
+      title="回到顶部"
+      aria-label="回到顶部"
+      @click="scrollToTop"
+    >
       <Icon name="up" :size="16" />
     </button>
   </div>

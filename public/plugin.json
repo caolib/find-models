@@ -9,10 +9,7 @@
     {
       "code": "home",
       "explain": "搜索 AI 模型 / 按供应商浏览",
-      "cmds": [
-        "models",
-        "模型"
-      ]
+      "cmds": ["models", "模型"]
     },
     {
       "code": "input-search",

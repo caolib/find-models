@@ -1,7 +1,7 @@
 :root,
-html[data-theme="light"] {
+html[data-theme='light'] {
   /* 浅色 - dev tool 单色调高密度 */
-  --bg: #F4F4F4;
+  --bg: #f4f4f4;
   --bg-elev: #ffffff;
   --surface: #f4f5f7;
   --surface-hover: #eceef1;
@@ -16,31 +16,33 @@ html[data-theme="light"] {
   --text-faint: #94a3b8;
 
   --accent: #2563eb;
-  --accent-soft: rgba(37, 99, 235, .10);
-  --accent-border: rgba(37, 99, 235, .35);
+  --accent-soft: rgba(37, 99, 235, 0.1);
+  --accent-border: rgba(37, 99, 235, 0.35);
 
   --ok: #16a34a;
-  --ok-soft: rgba(22, 163, 74, .12);
+  --ok-soft: rgba(22, 163, 74, 0.12);
   --warn: #d97706;
-  --warn-soft: rgba(217, 119, 6, .14);
+  --warn-soft: rgba(217, 119, 6, 0.14);
   --danger: #dc2626;
-  --muted-badge: rgba(100, 116, 139, .14);
+  --muted-badge: rgba(100, 116, 139, 0.14);
 
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, .06);
-  --shadow-md: 0 4px 16px rgba(15, 23, 42, .08);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.08);
 
   --radius-sm: 5px;
   --radius: 7px;
   --radius-lg: 10px;
 
-  --font-mono: 'JetBrains Mono', 'Cascadia Code', 汉仪有圆, Anthropicons-Variable, kanzhun-mix, FontAwesome, system-ui, sans-serif;
+  --font-mono:
+    'JetBrains Mono', 'Cascadia Code', 汉仪有圆, Anthropicons-Variable,
+    kanzhun-mix, FontAwesome, system-ui, sans-serif;
 
   --row-h: 46px;
   color-scheme: light;
 }
 
 /* 深色：纯灰阶（无蓝偏），由 prefs.theme 写 data-theme */
-html[data-theme="dark"] {
+html[data-theme='dark'] {
   --bg: #0a0a0a;
   --bg-elev: #141414;
   --surface: #1a1a1a;
@@ -56,18 +58,18 @@ html[data-theme="dark"] {
   --text-faint: #5c5c5c;
 
   --accent: #60a5fa;
-  --accent-soft: rgba(96, 165, 250, .14);
-  --accent-border: rgba(96, 165, 250, .40);
+  --accent-soft: rgba(96, 165, 250, 0.14);
+  --accent-border: rgba(96, 165, 250, 0.4);
 
   --ok: #4ade80;
-  --ok-soft: rgba(74, 222, 128, .14);
+  --ok-soft: rgba(74, 222, 128, 0.14);
   --warn: #fbbf24;
-  --warn-soft: rgba(251, 191, 36, .16);
+  --warn-soft: rgba(251, 191, 36, 0.16);
   --danger: #f87171;
-  --muted-badge: rgba(160, 160, 160, .18);
+  --muted-badge: rgba(160, 160, 160, 0.18);
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .40);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, .50);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
   color-scheme: dark;
 }
 
@@ -80,7 +82,9 @@ body {
   margin: 0;
   padding: 0;
   font-family: var(--font-mono);
-  font-feature-settings: "tnum" 1, "cv01" 1;
+  font-feature-settings:
+    'tnum' 1,
+    'cv01' 1;
   font-size: 13px;
   line-height: 1.5;
   background: var(--bg);
@@ -128,10 +132,9 @@ a:hover {
 }
 
 @keyframes pulse {
-
   0%,
   100% {
-    opacity: .45;
+    opacity: 0.45;
   }
 
   50% {

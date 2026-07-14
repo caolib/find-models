@@ -12,12 +12,12 @@ export default defineConfig({
     host: '127.0.0.1',
     watch: {
       usePolling: true,
-      interval: 300
+      interval: 300,
     },
     hmr: {
       port: 5173,
       protocol: 'ws',
-      host: '127.0.0.1'
-    }
-  }
+      host: '127.0.0.1',
+    },
+  },
 })

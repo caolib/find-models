@@ -10,10 +10,10 @@ export const useCatalogStore = defineStore('catalog', {
     rows: [],
     loading: false,
     error: '',
-    loaded: false
+    loaded: false,
   }),
   actions: {
-    async ensureLoaded () {
+    async ensureLoaded() {
       if (this.loaded) return
       if (inflight) return inflight
 
@@ -25,7 +25,10 @@ export const useCatalogStore = defineStore('catalog', {
             throw new Error('当前环境无数据服务（需在 uTools 中运行）')
           }
           const prefs = usePrefsStore()
-          const catalog = await window.services.getCatalog(false, prefs.catalogTtlMs)
+          const catalog = await window.services.getCatalog(
+            false,
+            prefs.catalogTtlMs,
+          )
           this.rows = flatten(catalog)
           this.loaded = true
         } catch (e) {
@@ -36,6 +39,6 @@ export const useCatalogStore = defineStore('catalog', {
         }
       })()
       return inflight
-    }
-  }
+    },
+  },
 })

@@ -1,14 +1,14 @@
 <script setup>
-import { computed, ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { computed, ref, watch, onMounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import {
-  flatten, inputCost, outputCost, contextLimit,
+  inputCost, outputCost, contextLimit,
   formatTokens, formatCost
 } from './data'
 import Icon from './Icon.vue'
 import Logo from './Logo.vue'
 import { useUiStore } from '../stores/ui'
-import { usePrefsStore } from '../stores/prefs'
+import { useCatalogStore } from '../stores/catalog'
 import './index.css'
 
 const props = defineProps({
@@ -18,8 +18,9 @@ const props = defineProps({
 const emit = defineEmits(['select', 'stats'])
 
 const ui = useUiStore()
-const prefs = usePrefsStore()
+const catalog = useCatalogStore()
 const { searchQuery: query, searchFilter: filter, searchSort: sort } = storeToRefs(ui)
+const { rows, loading, error, loaded } = storeToRefs(catalog)
 
 const VISION_MODALITIES = ['image', 'video', 'audio', 'pdf']
 
@@ -31,16 +32,10 @@ function rowKey (r) {
   return r.providerId + '/' + r.id
 }
 
-const rows = ref([])
-const loading = ref(true)
-const error = ref('')
 const PAGE = 50
 const limit = ref(PAGE)
 const listEl = ref(null)
 const showTop = ref(false)
-
-let alive = true
-onUnmounted(() => { alive = false })
 
 watch(
   () => props.enterAction,
@@ -50,18 +45,7 @@ watch(
   { immediate: true }
 )
 
-onMounted(async () => {
-  try {
-    const catalog = await window.services.getCatalog(false, prefs.catalogTtlMs)
-    if (!alive) return
-    rows.value = flatten(catalog)
-    loading.value = false
-  } catch (e) {
-    if (!alive) return
-    error.value = e.message || String(e)
-    loading.value = false
-  }
-})
+onMounted(() => { catalog.ensureLoaded() })
 
 const filtered = computed(() => {
   const q = query.value.trim().toLowerCase()
@@ -161,7 +145,7 @@ function onRowKey (e, r) {
 </script>
 
 <template>
-  <div v-if="loading" class="state-wrap">
+  <div v-if="loading || !loaded" class="state-wrap">
     <div class="spinner" />
     <div class="big">加载模型数据中…</div>
   </div>

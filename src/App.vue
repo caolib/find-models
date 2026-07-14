@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import Search from './Models/Search.vue'
 import Detail from './Models/Detail.vue'
@@ -22,18 +22,43 @@ const enterAction = ref({})
 const selected = ref(null)
 const searchStats = ref({ shown: 0, total: 0, all: 0 })
 const providerStats = ref({ shown: 0, total: 0, name: '' })
+const searchInputEl = ref(null)
+const providerInputEl = ref(null)
 
 const prefs = usePrefsStore()
 const ui = useUiStore()
 const { tab, fontFamily, theme } = storeToRefs(prefs)
 const { searchQuery, searchSort, providerModelQ } = storeToRefs(ui)
 
+const tabView = computed(() => {
+  if (tab.value === 'settings') return Settings
+  if (tab.value === 'providers') return Providers
+  return Search
+})
+
 // 迁移旧 font id，并同步 DOM
 prefs.$patch({ fontFamily: normalizeFont(prefs.fontFamily) })
 if (!['system', 'light', 'dark'].includes(prefs.theme)) prefs.theme = 'system'
 
+function focusTabSearch () {
+  nextTick(() => {
+    const el = tab.value === 'search'
+      ? searchInputEl.value
+      : tab.value === 'providers'
+        ? providerInputEl.value
+        : null
+    el?.focus()
+  })
+}
+
+function onPanelStats (e) {
+  if (tab.value === 'providers') providerStats.value = e
+  else searchStats.value = e
+}
+
 watch(fontFamily, (v) => applyFontFamily(v), { immediate: true })
 watch(theme, (v) => applyTheme(v), { immediate: true })
+watch(tab, focusTabSearch, { immediate: true })
 bindSystemTheme(() => prefs.theme)
 onUnmounted(unbindSystemTheme)
 
@@ -45,6 +70,7 @@ onMounted(() => {
     enterAction.value = action
     selected.value = null
     if (prefs.theme === 'system') applyTheme('system')
+    focusTabSearch()
   })
   u.onPluginOut(() => {
     enterAction.value = {}
@@ -92,9 +118,9 @@ function close () {
           <div v-if="tab === 'search'" class="app-toolbar">
             <div class="search-field app-search-field">
               <input
+                ref="searchInputEl"
                 class="search-input"
                 type="search"
-                autofocus
                 :value="searchQuery"
                 placeholder="搜索 模型 / 供应商 / family"
                 aria-label="搜索模型"
@@ -134,6 +160,7 @@ function close () {
           <div v-else-if="tab === 'providers'" class="app-toolbar app-toolbar-prov">
             <div class="search-field app-search-field">
               <input
+                ref="providerInputEl"
                 class="search-input"
                 type="search"
                 :value="providerModelQ"
@@ -163,20 +190,17 @@ function close () {
       </header>
 
       <div class="app-panel">
-        <Settings v-if="tab === 'settings'" />
-        <Providers
-          v-else-if="tab === 'providers'"
-          :selected="selected"
-          @select="select"
-          @stats="providerStats = $event"
-        />
-        <Search
-          v-else
-          :enter-action="enterAction"
-          :selected="selected"
-          @select="select"
-          @stats="searchStats = $event"
-        />
+        <!-- KeepAlive：切 Tab 不销毁，避免重挂载 + 重 flatten/重渲染 -->
+        <KeepAlive>
+          <component
+            :is="tabView"
+            :key="tab"
+            :enter-action="enterAction"
+            :selected="selected"
+            @select="select"
+            @stats="onPanelStats"
+          />
+        </KeepAlive>
       </div>
     </div>
     <aside v-if="selected && tab !== 'settings'" class="app-side">

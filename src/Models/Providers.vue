@@ -1,13 +1,14 @@
 <script setup>
-import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import {
-  flatten, contextLimit, formatTokens
+  contextLimit, formatTokens
 } from './data'
 import Logo from './Logo.vue'
 import Icon from './Icon.vue'
 import { usePrefsStore } from '../stores/prefs'
 import { useUiStore } from '../stores/ui'
+import { useCatalogStore } from '../stores/catalog'
 import './index.css'
 
 const props = defineProps({
@@ -17,30 +18,15 @@ const emit = defineEmits(['select', 'stats'])
 
 const prefs = usePrefsStore()
 const ui = useUiStore()
+const catalog = useCatalogStore()
 const { pinnedProviders: pinned } = storeToRefs(prefs)
 const { providerModelQ: modelQ } = storeToRefs(ui)
+const { rows, loading, error, loaded } = storeToRefs(catalog)
 
-const rows = ref([])
-const loading = ref(true)
-const error = ref('')
 const active = ref(null)
 const q = ref('')
 
-let alive = true
-onUnmounted(() => { alive = false })
-
-onMounted(async () => {
-  try {
-    const catalog = await window.services.getCatalog(false, prefs.catalogTtlMs)
-    if (!alive) return
-    rows.value = flatten(catalog)
-    loading.value = false
-  } catch (e) {
-    if (!alive) return
-    error.value = e.message || String(e)
-    loading.value = false
-  }
-})
+onMounted(() => { catalog.ensureLoaded() })
 
 function togglePin(id, e) {
   e.stopPropagation()
@@ -130,7 +116,7 @@ function onKey(e, fn) {
 </script>
 
 <template>
-  <div v-if="loading" class="state-wrap">
+  <div v-if="loading || !loaded" class="state-wrap">
     <div class="spinner" />
     <div class="big">加载供应商数据中…</div>
   </div>

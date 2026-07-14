@@ -56,6 +56,17 @@ function onPanelStats (e) {
   else searchStats.value = e
 }
 
+// ponytail: 输入防抖 200ms，避免逐字重算 filtered；enterAction/清除走即时路径
+let debounceTimer
+function debounce (fn, ms = 200) {
+  return (...args) => {
+    clearTimeout(debounceTimer)
+    debounceTimer = setTimeout(() => fn(...args), ms)
+  }
+}
+const debouncedSetSearchQuery = debounce((v) => ui.setSearchQuery(v))
+const debouncedSetProviderModelQ = debounce((v) => ui.setProviderModelQ(v))
+
 watch(fontFamily, (v) => applyFontFamily(v), { immediate: true })
 watch(theme, (v) => applyTheme(v), { immediate: true })
 watch(tab, focusTabSearch, { immediate: true })
@@ -124,7 +135,7 @@ function close () {
                 :value="searchQuery"
                 placeholder="搜索 模型 / 供应商 / family"
                 aria-label="搜索模型"
-                @input="ui.setSearchQuery($event.target.value)"
+                @input="debouncedSetSearchQuery($event.target.value)"
               >
               <button
                 v-if="searchQuery"
@@ -166,7 +177,7 @@ function close () {
                 :value="providerModelQ"
                 placeholder="搜索当前供应商模型…"
                 aria-label="搜索当前供应商模型"
-                @input="ui.setProviderModelQ($event.target.value)"
+                @input="debouncedSetProviderModelQ($event.target.value)"
               >
               <button
                 v-if="providerModelQ"

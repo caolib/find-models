@@ -193,7 +193,7 @@ const hasToggle = computed(() => props.row.reasoning_options?.some((o) => o.type
           <span class="mb-arrow">◇</span>
           <span class="mb-label">多模态</span>
           <div class="mod-tags">
-            <span v-if="multimodal" class="mod-tag image">支持非文本模态</span>
+            <span v-if="multimodal" class="mod-tag image">多模态</span>
             <span v-else class="mod-tag text">仅文本</span>
           </div>
         </div>

@@ -8,6 +8,7 @@ import {
 import Icon from './Icon.vue'
 import Logo from './Logo.vue'
 import { useUiStore } from '../stores/ui'
+import { usePrefsStore } from '../stores/prefs'
 import { useCatalogStore } from '../stores/catalog'
 import './index.css'
 
@@ -18,17 +19,19 @@ const props = defineProps({
 const emit = defineEmits(['select', 'stats'])
 
 const ui = useUiStore()
+const prefs = usePrefsStore()
 const catalog = useCatalogStore()
 const { searchQuery: query, searchFilter: filter, searchSort: sort } = storeToRefs(ui)
+const { pinnedProviders: pinned } = storeToRefs(prefs)
 const { rows, loading, error, loaded } = storeToRefs(catalog)
 
 const VISION_MODALITIES = ['image', 'video', 'audio', 'pdf']
 
-function hasVision (row) {
+function hasVision(row) {
   return row.modalities?.input?.some((m) => VISION_MODALITIES.includes(m))
 }
 
-function rowKey (r) {
+function rowKey(r) {
   return r.providerId + '/' + r.id
 }
 
@@ -80,6 +83,13 @@ const filtered = computed(() => {
       sorted.sort((a, b) => (b.last_updated || '').localeCompare(a.last_updated || ''))
       break
   }
+  // ponytail: 搜索时置顶供应商卡片置顶，组内保持原排序（稳定分区）
+  if (q) {
+    sorted.sort((a, b) =>
+      (pinned.value.includes(b.providerId) ? 1 : 0) -
+      (pinned.value.includes(a.providerId) ? 1 : 0)
+    )
+  }
   return sorted
 })
 
@@ -110,7 +120,7 @@ watch(
   { immediate: true }
 )
 
-function loadMore () {
+function loadMore() {
   if (!hasMore.value) return
   limit.value += PAGE
   nextTick(() => {
@@ -120,7 +130,7 @@ function loadMore () {
   })
 }
 
-function onListScroll () {
+function onListScroll() {
   const el = listEl.value
   if (!el) return
   showTop.value = el.scrollTop > 240
@@ -128,15 +138,15 @@ function onListScroll () {
   if (el.scrollTop + el.clientHeight >= el.scrollHeight - 160) loadMore()
 }
 
-function scrollToTop () {
+function scrollToTop() {
   listEl.value?.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-function retry () {
+function retry() {
   window.services.getCatalog(true).then(() => location.reload())
 }
 
-function onRowKey (e, r) {
+function onRowKey(e, r) {
   if (e.key === 'Enter' || e.key === ' ') {
     e.preventDefault()
     emit('select', r)
@@ -156,23 +166,11 @@ function onRowKey (e, r) {
     <button type="button" @click="retry">重试</button>
   </div>
   <div v-else class="search-view">
-    <div
-      ref="listEl"
-      class="scroll-list cards"
-      role="listbox"
-      aria-label="模型列表"
-      @scroll.passive="onListScroll"
-    >
-      <div
-        v-for="r in pageItems"
-        :key="rowKey(r)"
-        role="option"
-        :aria-selected="!!(selected && rowKey(selected) === rowKey(r))"
-        tabindex="0"
-        :class="['model-card', { on: selected && rowKey(selected) === rowKey(r) }]"
-        @click="emit('select', r)"
-        @keydown="onRowKey($event, r)"
-      >
+    <div ref="listEl" class="scroll-list cards" role="listbox" aria-label="模型列表" @scroll.passive="onListScroll">
+      <div v-for="r in pageItems" :key="rowKey(r)" role="option"
+        :aria-selected="!!(selected && rowKey(selected) === rowKey(r))" tabindex="0"
+        :class="['model-card', { on: selected && rowKey(selected) === rowKey(r), pinned: query.trim() && pinned.includes(r.providerId) }]"
+        @click="emit('select', r)" @keydown="onRowKey($event, r)">
         <div class="model-card-head">
           <Logo :id="r.providerId" :name="r.providerName" :size="26" />
           <div class="model-card-top">
@@ -207,26 +205,14 @@ function onRowKey (e, r) {
       </div>
       <div v-if="pageItems.length === 0" class="list-empty">未匹配到模型，换个关键词试试</div>
       <div class="scroll-sentinel">
-        <button
-          v-if="hasMore"
-          type="button"
-          class="scroll-more-btn"
-          @click="loadMore"
-        >
+        <button v-if="hasMore" type="button" class="scroll-more-btn" @click="loadMore">
           加载更多（{{ shown }} / {{ total }}）
         </button>
         <span v-else-if="total > 0" class="scroll-end">已全部显示</span>
       </div>
     </div>
 
-    <button
-      v-show="showTop"
-      type="button"
-      class="back-top"
-      title="回到顶部"
-      aria-label="回到顶部"
-      @click="scrollToTop"
-    >
+    <button v-show="showTop" type="button" class="back-top" title="回到顶部" aria-label="回到顶部" @click="scrollToTop">
       <Icon name="up" :size="16" />
     </button>
   </div>

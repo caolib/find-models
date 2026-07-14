@@ -258,8 +258,8 @@
 }
 .mod-tag.text { color: var(--text); border-color: var(--border); }
 .mod-tag.image, .mod-tag.video, .mod-tag.audio, .mod-tag.pdf {
-  background: var(--warn-soft);
-  color: var(--warn);
+  background: rgba(34, 197, 94, .14);
+  color: #22c55e;
   border-color: transparent;
 }
 .mod-tag.none { background: transparent; color: var(--text-faint); font-style: italic; }
